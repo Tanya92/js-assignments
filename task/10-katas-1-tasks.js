@@ -18,7 +18,6 @@
  */
 function createCompassPoints() {
     throw new Error('Not implemented');
-    var sides = ['N','E','S','W'];  // use array of cardinal directions only!
 }
 
 
@@ -137,8 +136,27 @@ function canDominoesMakeRow(dominoes) {
  * [ 1, 2, 4, 5]          => '1,2,4,5'
  */
 function extractRanges(nums) {
-    throw new Error('Not implemented');
-}
+    let result = [];
+    let range = [nums[0]];
+    function pasteRange(range) {
+        if (range.length > 2) {
+            result.push(`${range[0]}-${range[range.length - 1]}`);
+        } else {
+            result.push(range.join(','));
+        }
+    }
+    for (let i = 1; i < nums.length; i++) {
+        if (nums[i] == range[range.length - 1] + 1) {
+            range.push(nums[i]);
+        } else {
+            pasteRange(range);
+            range = [nums[i]];
+        }
+    }
+    pasteRange(range);
+    console.log(nums,result);
+    return result.join(',');
+} 
 
 module.exports = {
     createCompassPoints : createCompassPoints,

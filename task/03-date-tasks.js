@@ -22,7 +22,7 @@
  *    'Sun, 17 May 1998 03:00:00 GMT+01' => Date()
  */
 function parseDataFromRfc2822(value) {
-   throw new Error('Not implemented');
+   return new Date(value);
 }
 
 /**
@@ -37,7 +37,7 @@ function parseDataFromRfc2822(value) {
  *    '2016-01-19T08:07:37Z' => Date()
  */
 function parseDataFromIso8601(value) {
-   throw new Error('Not implemented');
+   return new Date(value);
 }
 
 
@@ -56,7 +56,16 @@ function parseDataFromIso8601(value) {
  *    Date(2015,1,1)    => false
  */
 function isLeapYear(date) {
-   throw new Error('Not implemented');
+   let year = date.getFullYear();
+   if (year % 4 !== 0) {
+      return false;
+   } else if (year % 100 !== 0) {
+      return true;
+   } else if (year % 400 !== 0) {
+      return false;
+   } else {
+      return true;
+   }
 }
 
 
@@ -75,8 +84,16 @@ function isLeapYear(date) {
  *    Date(2000,1,1,10,0,0),  Date(2000,1,1,10,0,0,250)     => "00:00:00.250"
  *    Date(2000,1,1,10,0,0),  Date(2000,1,1,15,20,10,453)   => "05:20:10.453"
  */
+
+ function leadingZeroes(number,length = 2) {
+   return `000${number}`.slice(-length);
+ }
 function timeSpanToString(startDate, endDate) {
-   throw new Error('Not implemented');
+   const hours = endDate.getHours() - startDate.getHours();
+   const minutes = endDate.getMinutes() - startDate.getMinutes();
+   const seconds = endDate.getSeconds() - startDate.getSeconds();
+   const milliseconds = endDate.getMilliseconds() - startDate.getMilliseconds();
+   return `${leadingZeroes(hours)}:${leadingZeroes(minutes)}:${leadingZeroes(seconds)}.${leadingZeroes(milliseconds,3)}`;
 }
 
 
@@ -93,8 +110,34 @@ function timeSpanToString(startDate, endDate) {
  *    Date.UTC(2016,3,5,18, 0) => Math.PI
  *    Date.UTC(2016,3,5,21, 0) => Math.PI/2
  */
+
+ function changeHoursData(hour) {
+    const hours = hour % 12;
+    return hours ? hours : 12;
+ }
+ function changeDegree(degree) {
+      if  (degree < 0) {
+         degree = 360 + degree;
+      }
+      if (degree < 180) {
+         return degree;
+      } else {
+         return 360 - degree;
+      }
+ }
+ function changeRadian(radian) {
+    if (radian < Math.PI) {
+       return radian;
+    } else {
+       return 2 * Math.PI - radian;
+    }
+ }
 function angleBetweenClockHands(date) {
-    throw new Error('Not implemented');
+   
+   let resultDegree = 0.5 * (60 * changeHoursData(date.getUTCHours()) - 11 * date.getUTCMinutes());
+   let result = ((changeDegree(resultDegree)) * Math.PI) / 180;
+   return changeRadian(result);;
+   
 }
 
 

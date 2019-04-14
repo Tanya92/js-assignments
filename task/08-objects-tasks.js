@@ -23,9 +23,12 @@
  *    console.log(r.getArea());   // => 200
  */
 function Rectangle(width, height) {
-    throw new Error('Not implemented');
+    this.width = width;
+    this.height = height;
 }
-
+Rectangle.prototype.getArea = function() {
+    return this.width * this.height;
+}
 
 /**
  * Returns the JSON representation of specified object
@@ -38,7 +41,7 @@ function Rectangle(width, height) {
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
 function getJSON(obj) {
-    throw new Error('Not implemented');
+    return JSON.stringify(obj);
 }
 
 
@@ -54,7 +57,8 @@ function getJSON(obj) {
  *
  */
 function fromJSON(proto, json) {
-    throw new Error('Not implemented');
+    console.log(Object.assign(proto, JSON.parse(json)));
+    return Object.setPrototypeOf(JSON.parse(json),proto);
 }
 
 
@@ -106,36 +110,169 @@ function fromJSON(proto, json) {
  *  For more examples see unit tests.
  */
 
-const cssSelectorBuilder = {
+class cssSelectorBuilder {
+    constructor(result = '') {
+        this.result = result;
+        this.selectors = [];
+        this.allowedPrevSelectors = {
+            'element': {
+                '': 1,
+                'id': 0,
+                'element': 0,
+                'class': 0,
+                'attribute': 0,
+                'pseudoClass': 0,
+                'pseudoElement': 0
+            },
+            'id': {
+                '': 1,
+                'id': 0,
+                'element': 1,
+                'class': 0,
+                'attribute': 0,
+                'pseudoClass': 0,
+                'pseudoElement': 0
+            },
+            'class': {
+                '': 1,
+                'id': 1,
+                'element': 1,
+                'class': Infinity,
+                'attribute': 0,
+                'pseudoClass': 0,
+                'pseudoElement': 0
+            },
+            'attribute': {
+                '': 1,
+                'id': 1,
+                'element': 1,
+                'class': Infinity,
+                'attribute': Infinity,
+                'pseudoClass': 0,
+                'pseudoElement': 0
+            },
+            'pseudoClass': {
+                '': 1,
+                'id': 1,
+                'element': 1,
+                'class': Infinity,
+                'attribute': Infinity,
+                'pseudoClass': Infinity,
+                'pseudoElement': 0
+            },
+            'pseudoElement': {
+                '': 1,
+                'element': 1,
+                'id': 1,
+                'class': Infinity,
+                'attribute': Infinity,
+                'pseudoClass': Infinity,
+                'pseudoElement': 0
+            },
 
-    element: function(value) {
-        throw new Error('Not implemented');
-    },
+        }
+    }
+    
+    canInsert(selector) {
+        const counts = {};
+        this.selectors.forEach(elem => {
+            if (counts[elem] == undefined) {
+                counts[elem] = 0;
+            }
+            counts[elem]++;
+            if (this.allowedPrevSelectors[selector][elem] < counts[elem]) {
+                throw 'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element';
+            }
+        })
+    }
 
-    id: function(value) {
-        throw new Error('Not implemented');
-    },
+    static element(value) {
+        return new cssSelectorBuilder().element(value); 
+    }
 
-    class: function(value) {
-        throw new Error('Not implemented');
-    },
+    element(value){
+        if (this.hasElement) {
+            throw 'Element, id and pseudo-element should not occur more then one time inside the selector';
+        }
+        this.canInsert('element');
+        this.selectors.push('element');
+        this.hasElement = true;
+        this.result += value;
+        return this;
+    }
 
-    attr: function(value) {
-        throw new Error('Not implemented');
-    },
+    static id(value) {
+        return new cssSelectorBuilder().id(value); 
+    }
 
-    pseudoClass: function(value) {
-        throw new Error('Not implemented');
-    },
+    id(value) {
+        if (this.hasId) {
+            throw 'Element, id and pseudo-element should not occur more then one time inside the selector';
+        }
+        this.canInsert('id');
+        this.selectors.push('id');
+        this.hasId = true;
+        this.result += `#${value}`;
+        return this;
+    }
 
-    pseudoElement: function(value) {
-        throw new Error('Not implemented');
-    },
+    static class(value) {
+        return new cssSelectorBuilder().class(value);
+    }
 
-    combine: function(selector1, combinator, selector2) {
-        throw new Error('Not implemented');
-    },
-};
+    class(value) {
+        this.canInsert('class');
+        this.selectors.push('class');
+        this.result += `.${value}`;
+        return this;
+    }
+
+    static attr(value) {
+        return new cssSelectorBuilder().attr(value);
+    }
+
+    attr(value) {
+        this.canInsert('attribute');
+        this.selectors.push('attribute');
+        this.result += `[${value}]`;
+        return this;
+    }
+
+    static pseudoClass(value) {
+        return new cssSelectorBuilder().pseudoClass(value);
+    }
+
+    pseudoClass(value) {
+        this.canInsert('pseudoClass');
+        this.selectors.push('pseudoClass');
+        this.result += `:${value}`;
+        return this;
+    }
+
+    static pseudoElement(value) {
+        return new cssSelectorBuilder().pseudoElement(value);
+    }
+
+    pseudoElement(value) {
+        if (this.hasPseudoElement) {
+            throw 'Element, id and pseudo-element should not occur more then one time inside the selector';
+        }
+        this.canInsert('pseudoElement');
+        this.selectors.push('pseudoElement');
+        this.hasPseudoElement = true;
+        this.result += `::${value}`;
+        return this;
+    }
+
+    static combine(selector1, combinator, selector2) {
+        combinator = ' ' + combinator + ' ';
+        return new cssSelectorBuilder(selector1.stringify() + combinator + selector2.stringify());
+    }
+
+    stringify() {
+        return this.result;
+    }
+}
 
 
 module.exports = {
